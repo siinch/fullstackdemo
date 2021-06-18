@@ -2,7 +2,15 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 var MongoClient = require('mongodb').MongoClient;
-var url = "mongodb://localhost:27017/";
+//var url = "mongodb://localhost:27017/";
+let url = "mongodb+srv://test:test@test.5kkg7.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+
+
+app.use(express.static(__dirname));
+
+app.get("/", (request, response) => {
+  response.sendFile(__dirname + '/index.html');
+});
 
 // insert new highscore
 app.get("/insert/:name/:score", (request, response) => {
