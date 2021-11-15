@@ -1,25 +1,26 @@
 const express = require("express");
-const cors = require("cors");
+//const cors = require("cors");
 const app = express();
-var MongoClient = require('mongodb').MongoClient;
-//var url = "mongodb://localhost:27017/";
-let url = "mongodb+srv://test:test@test.5kkg7.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+app.use(express.static("./"));
+app.use(express.json());
+let MongoClient = require('mongodb').MongoClient;
+let url = "mongodb://localhost:27017/";
+const port = 3001;
+//let url = "mongodb+srv://test:test@test.5kkg7.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 
-
-app.use(express.static(__dirname));
 
 app.get("/", (request, response) => {
-  response.sendFile(__dirname + '/index.html');
+  response.sendFile("/index.html");
 });
 
 // insert new highscore
-app.get("/insert/:name/:score", (request, response) => {
-	console.log("Inserting highscore: " + request.params.name + ", " + request.params.score);
+app.post("/highscore", (request, response) => {
+	console.log("Inserting highscore: " + request.body.name + ", " + request.body.score);
 
   MongoClient.connect(url, function(err, db) {
     if (err) throw err;
     var dbo = db.db("mydb");
-    var myobj = { name: request.params.name, score: request.params.score};
+    var myobj = { name: request.body.name, score: request.body.score};
     dbo.collection("highscores").insertOne(myobj, function(err, res) {
       if (err) throw err;
 
@@ -31,8 +32,28 @@ app.get("/insert/:name/:score", (request, response) => {
   });
 });
 
-// find all highscores
-app.get("/findAll", (request, response) => {
+// get specific highscore
+app.get("/highscore/:name", (request, response) => {
+	console.log("Finding highscores... ");
+
+  MongoClient.connect(url, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("mydb");
+    dbo.collection("highscores")
+    .find({name: request.params.name})
+    .toArray(function(err, result) {
+      if (err) throw err;
+
+      console.log(result);
+      //response.header("Access-Control-Allow-Origin", "*");
+      response.json({highscores: result});
+      db.close();
+    });
+  });
+});
+
+// get all highscores
+app.get("/highscores", (request, response) => {
 	console.log("Finding highscores... ");
 
   MongoClient.connect(url, function(err, db) {
@@ -50,13 +71,13 @@ app.get("/findAll", (request, response) => {
 });
 
 // delete highscore
-app.get("/delete/:name", (request, response) => {
-	console.log("Deleting highscore: " + request.params.name);
+app.delete("/highscore", (request, response) => {
+	console.log("Deleting highscore: " + request.body.name);
 
   MongoClient.connect(url, function(err, db) {
     if (err) throw err;
     var dbo = db.db("mydb");
-    var myquery = { name: request.params.name };
+    var myquery = { name: request.body.name };
     dbo.collection("highscores").deleteOne(myquery, function(err, obj) {
       if (err) throw err;
 
@@ -69,25 +90,24 @@ app.get("/delete/:name", (request, response) => {
 });
 
 // updating highscore
-app.get("/update/:name/:score", (request, response) => {
-	console.log("Updating highscore of " + request.params.name + " to " + request.params.score);
+app.put("/highscore", (request, response) => {
+	console.log("Updating highscore of " + request.body.name + " to " + request.body.score);
 
   MongoClient.connect(url, function(err, db) {
     if (err) throw err;
     var dbo = db.db("mydb");
-    var myquery = { name: request.params.name };
-    var newvalues = { $set: {score: request.params.score } };
+    var myquery = { name: request.body.name };
+    var newvalues = { $set: {score: request.body.score } };
     dbo.collection("highscores").updateOne(myquery, newvalues, function(err, obj) {
       if (err) throw err;
 
-      console.log("Updated score of: " + request.params.name + " to " + request.params.score)
+      console.log("Updated score of: " + request.body.name + " to " + request.body.score)
       response.header("Access-Control-Allow-Origin", "*");
-      response.json({name: request.params.name, score: request.params.score});
+      response.json({name: request.body.name, score: request.body.score});
       db.close();
     });
   });
 });
 
 // start server
-const port = 3001;
 app.listen(port, () => console.log("Listening on port " + port));
