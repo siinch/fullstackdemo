@@ -120,36 +120,36 @@ app.put("/highscore", (request, response) => {
 app.post("/user", async (request, response) => {
 
   // hash the password
-  bcrypt.hash(
-    request.body.password, saltRounds, 
-    function(error, hash) {
-      console.log(request.body.password, hash);
+  let hash = await bcrypt.hash(
+    request.body.password, saltRounds);
 
-      console.log(
-        "Inserting new user: " +
-        request.body.username + ", " + hash
-      );
+  console.log(
+    "Inserting new user: " +
+    request.body.username + ", " + hash
+  );
     
-    MongoClient.connect(url, function(err, db) {
-      if (err) throw err;
-      var dbo = db.db("mydb");
-      var myobj = {
+
+  // connect to the database
+  let db = await MongoClient.connect(url);
+
+  let dbo = db.db("mydb");
+  let myobj = {
         username: request.body.username, 
         hash: hash
-      };
-      dbo.collection("users").insertOne(myobj, function(err, result) {
-        if (err) {
-          console.log("Username occupied:", myobj)
-          response.json({message: "Username occupied"});
-        }
-        else {
-          console.log("Created user:", myobj)
-          response.json(myobj);
-        }
-        db.close();
-      });
-    });
-  });
+  };
+
+  // try to insert the new user
+  try {
+    let result = await dbo.collection("users").insertOne(myobj);
+    console.log("Created user:", myobj)
+    response.json(myobj);
+  }
+  catch (error){
+    console.log("Username occupied:", myobj)
+    response.json({message: "Username occupied"});
+  }
+
+  db.close();
 });
 
 // start server
