@@ -79,3 +79,26 @@ function updateHighscore() {
     console.error('Error:', error);
   });
 }
+
+function signUp() {
+
+  let data = {
+    username: prompt("Username:"),
+    password: prompt("Password:")
+  }
+
+  fetch('./user', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('User inserted:', data);
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+  });
+}

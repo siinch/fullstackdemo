@@ -1,14 +1,21 @@
+// import the neccessary libraries
 const express = require("express");
-//const cors = require("cors");
+const bcrypt = require("bcrypt");
 const app = express();
+
+// configure express server
 app.use(express.static("./"));
 app.use(express.json());
+const port = 3001;
+
+// configure database connection
 let MongoClient = require('mongodb').MongoClient;
 let url = "mongodb://localhost:27017/";
-const port = 3001;
-//let url = "mongodb+srv://test:test@test.5kkg7.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 
+// configure security parameters
+const saltRounds = 10;
 
+// get request at root
 app.get("/", (request, response) => {
   response.sendFile("/index.html");
 });
@@ -81,7 +88,7 @@ app.delete("/highscore", (request, response) => {
     dbo.collection("highscores").deleteOne(myquery, function(err, obj) {
       if (err) throw err;
 
-      console.log("Deleted: " + JSON.stringify(myquery))
+      console.log("Deleted: " + JSON.stringify(myquery));
       response.header("Access-Control-Allow-Origin", "*");
       response.json(myquery);
       db.close();
@@ -105,6 +112,42 @@ app.put("/highscore", (request, response) => {
       response.header("Access-Control-Allow-Origin", "*");
       response.json({name: request.body.name, score: request.body.score});
       db.close();
+    });
+  });
+});
+
+// new user signup
+app.post("/user", async (request, response) => {
+
+  // hash the password
+  bcrypt.hash(
+    request.body.password, saltRounds, 
+    function(error, hash) {
+      console.log(request.body.password, hash);
+
+      console.log(
+        "Inserting new user: " +
+        request.body.username + ", " + hash
+      );
+    
+    MongoClient.connect(url, function(err, db) {
+      if (err) throw err;
+      var dbo = db.db("mydb");
+      var myobj = {
+        username: request.body.username, 
+        hash: hash
+      };
+      dbo.collection("users").insertOne(myobj, function(err, result) {
+        if (err) {
+          console.log("Username occupied:", myobj)
+          response.json({message: "Username occupied"});
+        }
+        else {
+          console.log("Created user:", myobj)
+          response.json(myobj);
+        }
+        db.close();
+      });
     });
   });
 });
