@@ -87,7 +87,7 @@ function signUp() {
     password: prompt("Password:")
   }
 
-  fetch('./user', {
+  fetch('./user/signup', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -97,6 +97,58 @@ function signUp() {
   .then(response => response.json())
   .then(data => {
     console.log('User inserted:', data);
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+  });
+}
+
+// login
+function logIn() {
+
+  let body = {
+    username: prompt("Username:"),
+    password: prompt("Password:")
+  }
+
+  fetch('./user/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log(data);
+    if(data.loginWasSuccessful){
+      sessionStorage.setItem("username", body.username);
+      sessionStorage.setItem("password", body.password);
+    }
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+  });
+}
+
+// delete user
+async function deleteUser() {
+
+  let data = {
+    username: sessionStorage.getItem("username"),
+    password: sessionStorage.getItem("password")
+  }
+
+  fetch('./user', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log(data);
   })
   .catch((error) => {
     console.error('Error:', error);

@@ -117,7 +117,7 @@ app.put("/highscore", (request, response) => {
 });
 
 // new user signup
-app.post("/user", async (request, response) => {
+app.post("/user/signup", async (request, response) => {
 
   // hash the password
   let hash = await bcrypt.hash(
@@ -151,6 +151,69 @@ app.post("/user", async (request, response) => {
 
   db.close();
 });
+
+// user login
+app.post("/user/login", async (request, response) => {
+
+  let passwordIsCorrect = await checkPassword(
+    request.body.username,
+    request.body.password
+  );
+
+  // normally return an authentication token here
+  if(passwordIsCorrect) response.json({loginWasSuccessful: true});
+  else response.json({loginWasSuccessful: false});
+  
+});
+
+app.delete("/user", async (request, response) => {
+
+  console.log("Deleting user: " + request.body.name);
+
+  let passwordIsCorrect = await checkPassword(
+    request.body.username,
+    request.body.password
+  );
+
+  if(!passwordIsCorrect) {
+    response.json({message: "Deletion Unuccessful"});
+    console.log("Deletion failed")
+  }
+
+  let db = await MongoClient.connect(url);
+  let dbo = db.db("mydb");
+  let myquery = {username: request.body.username};
+  let result = dbo.collection("users").deleteOne(myquery);
+  
+  console.log("Deleted: " + JSON.stringify(myquery));
+  response.json({
+    message: "Successfully deleted",
+    user: myquery.username
+  });
+  db.close();
+
+   
+});
+
+async function checkPassword(username, password) {
+
+
+    let db = await MongoClient.connect(url);
+    let dbo = db.db("mydb");
+
+    let result = await dbo.collection("users")
+    .find({username: username}).toArray();
+
+    let isPasswordCorrect;
+    if (result[0] != undefined)
+    isPasswordCorrect = await bcrypt
+    .compare(password, result[0].hash);
+    else isPasswordCorrect = false;
+
+    db.close();
+    return isPasswordCorrect;
+}
+
 
 // start server
 app.listen(port, () => console.log("Listening on port " + port));
