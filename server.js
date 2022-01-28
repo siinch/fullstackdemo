@@ -168,31 +168,34 @@ app.post("/user/login", async (request, response) => {
 
 app.delete("/user", async (request, response) => {
 
-  console.log("Deleting user: " + request.body.name);
+  try {
+    console.log("Deleting user: " + request.body.name);
 
-  let passwordIsCorrect = await checkPassword(
-    request.body.username,
-    request.body.password
-  );
+    let passwordIsCorrect = await checkPassword(
+      request.body.username,
+      request.body.password
+    );
 
-  if(!passwordIsCorrect) {
-    response.json({message: "Deletion Unuccessful"});
-    console.log("Deletion failed")
+    if(!passwordIsCorrect) {
+      response.json({message: "Deletion Unuccessful"});
+      console.log("Deletion failed")
+    }
+
+    let db = await MongoClient.connect(url);
+    let dbo = db.db("mydb");
+    let myquery = {username: request.body.username};
+    let result = dbo.collection("users").deleteOne(myquery);
+    
+    console.log("Deleted: " + JSON.stringify(myquery));
+    response.json({
+      message: "Successfully deleted",
+      user: myquery.username
+    });
+    db.close();
   }
-
-  let db = await MongoClient.connect(url);
-  let dbo = db.db("mydb");
-  let myquery = {username: request.body.username};
-  let result = dbo.collection("users").deleteOne(myquery);
-  
-  console.log("Deleted: " + JSON.stringify(myquery));
-  response.json({
-    message: "Successfully deleted",
-    user: myquery.username
-  });
-  db.close();
-
-   
+  catch(error) {
+    console.log(error);
+  }
 });
 
 async function checkPassword(username, password) {

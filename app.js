@@ -1,5 +1,3 @@
-let url = "http://localhost:3001";
-
 function insertHighscore() {
 
   let data = {
@@ -24,13 +22,13 @@ function insertHighscore() {
 }
 
 function getHighscore() {
-  fetch(url + "/highscore/" + prompt("Name:"))
+  fetch("/highscore/" + prompt("Name:"))
   .then(response => response.json())
   .then(data => alert(JSON.stringify(data)));
 }
 
 function getHighscores() {
-  fetch(url + "/highscores")
+  fetch("/highscores")
   .then(response => response.json())
   .then(data => alert(JSON.stringify(data)));
 }
