@@ -9,34 +9,36 @@ app.use(express.json());
 const port = 3001;
 
 // configure database connection
-let MongoClient = require('mongodb').MongoClient;
-let url = "mongodb://localhost:27017/";
+const MongoClient = require('mongodb').MongoClient;
+const url = "mongodb://localhost:27017/";
 
 // configure security parameters
 const saltRounds = 10;
 
 // get request at root
 app.get("/", (request, response) => {
+  console.log("New user connecting. Loading site..");
   response.sendFile("/index.html");
 });
 
 // insert new highscore
-app.post("/highscore", (request, response) => {
-	console.log("Inserting highscore: " + request.body.name + ", " + request.body.score);
+app.post("/highscore", async (request, response) => {
 
-  MongoClient.connect(url, function(err, db) {
-    if (err) throw err;
-    var dbo = db.db("mydb");
-    var myobj = { name: request.body.name, score: request.body.score};
-    dbo.collection("highscores").insertOne(myobj, function(err, res) {
-      if (err) throw err;
+  // receive and log the highscore data from the client
+  let highscore = request.body;
+	console.log("Inserting highscore: " + JSON.stringify(highscore));
 
-      console.log("Inserted: " + JSON.stringify(myobj))
-      response.header("Access-Control-Allow-Origin", "*");
-      response.json(myobj);
-      db.close();
-    });
-  });
+  // connect to the database and insert the highscore data
+  let db = await MongoClient.connect(url);
+  let dbresponse = await db.db("mydb")
+  .collection("highscores").insertOne(highscore);
+
+  // log the the result and send response to client
+  console.log("Inserted: " + JSON.stringify(myobj))
+  response.json(highscore);
+
+  // close the database
+  db.close();
 });
 
 // get specific highscore
