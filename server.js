@@ -9,7 +9,9 @@ app.use(express.json());
 const port = 3001;
 
 // configure database connection
-const MongoClient = require('mongodb').MongoClient;
+const mongodb = require('mongodb');
+const MongoClient = mongodb.MongoClient;
+const ObjectID = mongodb.ObjectID;
 const url = "mongodb://localhost:27017/";
 
 // configure security parameters
@@ -24,98 +26,82 @@ app.get("/", (request, response) => {
 // insert new highscore
 app.post("/highscore", async (request, response) => {
 
-  // receive and log the highscore data from the client
+  // receive and log the highscore data from the
   let highscore = request.body;
 	console.log("Inserting highscore: " + JSON.stringify(highscore));
 
   // connect to the database and insert the highscore data
   let db = await MongoClient.connect(url);
-  let dbresponse = await db.db("mydb")
+  let result = await db.db("mydb")
   .collection("highscores").insertOne(highscore);
 
   // log the the result and send response to client
-  console.log("Inserted: " + JSON.stringify(myobj))
+  console.log("Inserted: " + JSON.stringify(highscore))
   response.json(highscore);
 
   // close the database
   db.close();
 });
 
-// get specific highscore
-app.get("/highscore/:name", (request, response) => {
-	console.log("Finding highscores... ");
+// get specific highscore by username
+app.get("/highscore/:username", async (request, response) => {
+	
+  let username = request.params;
+  console.log("Finding highscores by: " + JSON.stringify(username));
 
-  MongoClient.connect(url, function(err, db) {
-    if (err) throw err;
-    var dbo = db.db("mydb");
-    dbo.collection("highscores")
-    .find({name: request.params.name})
-    .toArray(function(err, result) {
-      if (err) throw err;
+  let db = await MongoClient.connect(url);
+  let result = await db.db("mydb")
+  .collection("highscores").find(username).toArray();
 
-      console.log(result);
-      //response.header("Access-Control-Allow-Origin", "*");
-      response.json({highscores: result});
-      db.close();
-    });
-  });
+  console.log(result);
+  response.json({highscores: result});
+  db.close();
 });
 
 // get all highscores
-app.get("/highscores", (request, response) => {
-	console.log("Finding highscores... ");
+app.get("/highscores", async (request, response) => {
+	console.log("Finding all highscores... ");
 
-  MongoClient.connect(url, function(err, db) {
-    if (err) throw err;
-    var dbo = db.db("mydb");
-    dbo.collection("highscores").find({}).toArray(function(err, result) {
-      if (err) throw err;
+  let db = await MongoClient.connect(url);
+  let result = await db.db("mydb")
+  .collection("highscores").find({}).toArray();
 
-      console.log(result);
-      response.header("Access-Control-Allow-Origin", "*");
-      response.json({highscores: result});
-      db.close();
-    });
-  });
+  console.log(result);
+  response.json({highscores: result});
+  db.close();
 });
 
-// delete highscore
-app.delete("/highscore", (request, response) => {
-	console.log("Deleting highscore: " + request.body.name);
+// delete one highscore by id
+app.delete("/highscore", async (request, response) => {
 
-  MongoClient.connect(url, function(err, db) {
-    if (err) throw err;
-    var dbo = db.db("mydb");
-    var myquery = { name: request.body.name };
-    dbo.collection("highscores").deleteOne(myquery, function(err, obj) {
-      if (err) throw err;
+  let highscore = {_id: new ObjectID(request.body.highscoreID)};
+	console.log("Deleting highscore by: " + JSON.stringify(highscore));
 
-      console.log("Deleted: " + JSON.stringify(myquery));
-      response.header("Access-Control-Allow-Origin", "*");
-      response.json(myquery);
-      db.close();
-    });
-  });
+  let db = await MongoClient.connect(url);
+  let result = await db.db("mydb")
+  .collection("highscores").deleteOne(highscore);
+
+  console.log("Deleted: " + JSON.stringify(highscore));
+  response.json(highscore);
+  db.close();
 });
 
-// updating highscore
-app.put("/highscore", (request, response) => {
-	console.log("Updating highscore of " + request.body.name + " to " + request.body.score);
+//updating highscore
+app.put("/highscore", async (request, response) => {
 
-  MongoClient.connect(url, function(err, db) {
-    if (err) throw err;
-    var dbo = db.db("mydb");
-    var myquery = { name: request.body.name };
-    var newvalues = { $set: {score: request.body.score } };
-    dbo.collection("highscores").updateOne(myquery, newvalues, function(err, obj) {
-      if (err) throw err;
+  let oldHighscore = {_id: new ObjectID(request.body.highscoreID)};
+  let newHighscore = { $set: {highscore: request.body.highscore}};
+	console.log("Updating highscore of " + JSON.stringify(oldHighscore) +
+  " to:" + JSON.stringify(newHighscore));
 
-      console.log("Updated score of: " + request.body.name + " to " + request.body.score)
-      response.header("Access-Control-Allow-Origin", "*");
-      response.json({name: request.body.name, score: request.body.score});
-      db.close();
-    });
-  });
+  let db = await MongoClient.connect(url);
+  let result = await db.db("mydb")
+  .collection("highscores").updateOne(oldHighscore, newHighscore);
+
+  console.log("Updated highscore of " + JSON.stringify(oldHighscore) +
+  " to:" + JSON.stringify(newHighscore));
+  response.json(request.body);
+  db.close();
 });
 
 // new user signup

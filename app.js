@@ -1,11 +1,11 @@
 function insertHighscore() {
 
   let data = {
-    name: prompt("Name:"),
-    score: prompt("Score:")
+    username: prompt("Username:"),
+    highscore: prompt("Highscore:")
   }
 
-  fetch('./highscore', {
+  fetch('/highscore', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -22,7 +22,7 @@ function insertHighscore() {
 }
 
 function getHighscore() {
-  fetch("/highscore/" + prompt("Name:"))
+  fetch("/highscore/" + prompt("Username:"))
   .then(response => response.json())
   .then(data => alert(JSON.stringify(data)));
 }
@@ -36,10 +36,10 @@ function getHighscores() {
 function deleteHighscore() {
 
   let data = {
-    name: prompt("Name:")
+    highscoreID: prompt("HighscoreID:")
   }
 
-  fetch('./highscore', {
+  fetch('/highscore', {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
@@ -58,11 +58,11 @@ function deleteHighscore() {
 function updateHighscore() {
 
   let data = {
-    name: prompt("Name:"),
-    score: prompt("Score:")
+    highscoreID: prompt("HighscoreID"),
+    highscore: prompt("Highscore:")
   }
 
-  fetch('./highscore', {
+  fetch('/highscore', {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ function signUp() {
     password: prompt("Password:")
   }
 
-  fetch('./user/signup', {
+  fetch('/user/signup', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ function logIn() {
     password: prompt("Password:")
   }
 
-  fetch('./user/login', {
+  fetch('/user/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ async function deleteUser() {
     password: sessionStorage.getItem("password")
   }
 
-  fetch('./user', {
+  fetch('/user', {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
